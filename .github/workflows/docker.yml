@@ -2,32 +2,145 @@ name: docker build
 
 on:
   push:
-    branches: [ master ]
+#    branches: [ master ]
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Install system dependencies
-      run: |
-        sudo apt install -yq python3-pip
-        python3 -m pip install --upgrade pip setuptools wheel
-    - name: Login to DockerHub
-      uses: docker/login-action@v1
+    - name: Checkout repository
+      uses: actions/checkout@v3
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Build docker image
-      run: |
-        ./dockerfiles/build.sh
-        docker-compose -f dockerfiles/staging/docker-compose.yml up --exit-code-from client client
-        docker-compose -f dockerfiles/staging/docker-compose.yml down
-        docker images
-        docker tag labgrid-client ${{ secrets.DOCKERHUB_PREFIX }}client
-        docker tag labgrid-exporter ${{ secrets.DOCKERHUB_PREFIX }}exporter
-        docker tag labgrid-coordinator ${{ secrets.DOCKERHUB_PREFIX }}coordinator
-        docker push ${{ secrets.DOCKERHUB_PREFIX }}client
-        docker push ${{ secrets.DOCKERHUB_PREFIX }}exporter
-        docker push ${{ secrets.DOCKERHUB_PREFIX }}coordinator
-        docker images
+        fetch-depth: 0
+
+    - name: Extract version
+      id: extract-version
+      run: echo '::set-output name=VERSION::$(./setup.py --version | tail -1)'
+
+    - name: Debug version
+      run: echo "The version is ${{ steps.extract-version.outputs.VERSION }}"
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: all
+
+    - name: Set up Docker Buildx
+      id: buildx
+      uses: docker/setup-buildx-action@v2
+
+    #- name: Install system dependencies
+    #  run: |
+    #    sudo apt install -yq python3-pip
+    #    python3 -m pip install --upgrade pip setuptools wheel
+
+    #- name: Login to DockerHub
+    #  uses: docker/login-action@v1
+    #  with:
+    #    username: ${{ secrets.DOCKERHUB_USERNAME }}
+    #    password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # TODO do these in some kind of for loop
+
+    - name: Extract Docker metadata for labgrid-client
+      id: docker-meta-client
+      uses: docker/metadata-action@v4
+      with:
+        images: ghcr.io/${{ github.repository }}-client
+        tags: |
+          "type=raw,value=latest,enable={{is_default_branch}}"
+          "type=ref,event=branch"
+          "type=ref,suffix=-{{sha}},event=branch"
+          "type=ref,suffix=-{{date 'YYYYMMDD'}},event=branch"
+          "type=ref,event=tag"
+          "type=ref,event=pr"
+
+    - name: Build Docker container labgrid-client
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        target: labgrid-client
+        build-args: |
+          VERSION=${{ steps.extract-version.outputs.VERSION }}
+        push: true
+        tags: ${{ steps.docker-meta-client.outputs.tags }}
+        labels: ${{ steps.docker-meta-client.outputs.labels }}
+        file: dockerfiles/Dockerfile
+
+    - name: Extract Docker metadata for labgrid-exporter
+      id: docker-meta-exporter
+      uses: docker/metadata-action@v4
+      with:
+        images: ghcr.io/${{ github.repository }}-exporter
+        tags: |
+          "type=raw,value=latest,enable={{is_default_branch}}"
+          "type=ref,event=branch"
+          "type=ref,suffix=-{{sha}},event=branch"
+          "type=ref,suffix=-{{date 'YYYYMMDD'}},event=branch"
+          "type=ref,event=tag"
+          "type=ref,event=pr"
+
+    - name: Build Docker container labgrid-exporter
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        target: labgrid-exporter
+        build-args: |
+          VERSION=${{ steps.extract-version.outputs.VERSION }}
+        push: true
+        tags: ${{ steps.docker-meta-exporter.outputs.tags }}
+        labels: ${{ steps.docker-meta-exporter.outputs.labels }}
+        file: dockerfiles/Dockerfile
+
+    - name: Extract Docker metadata for labgrid-coordinator
+      id: docker-meta-coordinator
+      uses: docker/metadata-action@v4
+      with:
+        images: ghcr.io/${{ github.repository }}-coordinator
+        tags: |
+          "type=raw,value=latest,enable={{is_default_branch}}"
+          "type=ref,event=branch"
+          "type=ref,suffix=-{{sha}},event=branch"
+          "type=ref,suffix=-{{date 'YYYYMMDD'}},event=branch"
+          "type=ref,event=tag"
+          "type=ref,event=pr"
+
+    - name: Build Docker container labgrid-coordinator
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        target: labgrid-coordinator
+        build-args: |
+          VERSION=${{ steps.extract-version.outputs.VERSION }}
+        push: true
+        tags: ${{ steps.docker-meta-coordinator.outputs.tags }}
+        labels: ${{ steps.docker-meta-coordinator.outputs.labels }}
+        file: dockerfiles/Dockerfile
+
+    # TODO run the docker-compose tests before pushing
+    # TODO push to ghcr.io for forks and main
+    # TODO push to dockerhub for main (or if it's configured downstream)
+
+    #- name: Build docker image
+    #  run: |
+    #    ./dockerfiles/build.sh
+    #    docker-compose -f dockerfiles/staging/docker-compose.yml up --exit-code-from client client
+    #    docker-compose -f dockerfiles/staging/docker-compose.yml down
+    #    docker images
+    #    docker tag labgrid-client ${{ secrets.DOCKERHUB_PREFIX }}client
+    #    docker tag labgrid-exporter ${{ secrets.DOCKERHUB_PREFIX }}exporter
+    #    docker tag labgrid-coordinator ${{ secrets.DOCKERHUB_PREFIX }}coordinator
+    #    docker push ${{ secrets.DOCKERHUB_PREFIX }}client
+    #    docker push ${{ secrets.DOCKERHUB_PREFIX }}exporter
+    #    docker push ${{ secrets.DOCKERHUB_PREFIX }}coordinator
+    #    docker images
