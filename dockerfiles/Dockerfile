@@ -1,4 +1,4 @@
-FROM debian:buster-slim AS labgrid-base
+FROM debian:bullseye-slim AS labgrid-base
 
 LABEL maintainer="eha@deif.com"
 
