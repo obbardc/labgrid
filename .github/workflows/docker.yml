@@ -50,6 +50,9 @@ jobs:
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-client
+        platforms: |
+          linux/amd64
+          linux/arm64
 
     - name: Build labgrid-exporter docker image
       uses: docker/build-push-action@v3
@@ -62,6 +65,9 @@ jobs:
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-exporter
+        platforms: |
+          linux/amd64
+          linux/arm64
 
     - name: Build labgrid-coordinator docker image
       uses: docker/build-push-action@v3
@@ -74,6 +80,9 @@ jobs:
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-coordinator
+        platforms: |
+          linux/amd64
+          linux/arm64
 
     - name: Check docker images
       run: |
