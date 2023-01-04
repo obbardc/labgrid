@@ -43,8 +43,9 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        push: false
-        load: true
+        #push: false
+        #load: true
+        push: true
         tags: ${{ secrets.DOCKERHUB_PREFIX }}client:latest
         build-args: |
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
@@ -58,8 +59,9 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        push: false
-        load: true
+        #push: false
+        #load: true
+        push: true
         tags: ${{ secrets.DOCKERHUB_PREFIX }}exporter:latest
         build-args: |
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
@@ -73,8 +75,9 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        push: false
-        load: true
+        #push: false
+        #load: true
+        push: true
         tags: ${{ secrets.DOCKERHUB_PREFIX }}coordinator:latest
         build-args: |
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
