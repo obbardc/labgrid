@@ -8,7 +8,7 @@ on:
 # TODO build labgrid-base & cache it in separate job
 jobs:
   docker-base-build:
-    name: Build Docker image (labgrid-base)
+    name: Build labgrid-base docker image
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -30,18 +30,22 @@ jobs:
         #cache-from: type=local,src=/tmp/.build-cache
 
   docker-build:
-    name: Build Docker image
+    name: Build labgrid-${{ matrix.target }} docker image
     runs-on: ubuntu-latest
     needs: docker-base-build
     strategy:
       matrix:
-        include:
-          - target: labgrid-client
-            suffix: client
-          - target: labgrid-exporter
-            suffix: exporter
-          - target: labgrid-coordinator
-            suffix: coordinator
+        target:
+          - client
+          - exporter
+          - coordinator
+#        include:
+#          - target: labgrid-client
+#            suffix: client
+#          - target: labgrid-exporter
+#            suffix: exporter
+#          - target: labgrid-coordinator
+#            suffix: coordinator
     steps:
     - uses: actions/checkout@v3
     - name: Install system dependencies
@@ -70,7 +74,7 @@ jobs:
 
 # TODO add meta step
 
-    - name: Build ${{ matrix.target }} docker image
+    - name: Build labgrid-${{ matrix.target }} docker image
       uses: docker/build-push-action@v3
       with:
         context: .
@@ -80,12 +84,12 @@ jobs:
         push: true
         # TODO check tags / labels
         #tags: ${{ steps.meta.outputs.tags }}
-        tags: ${{ secrets.DOCKERHUB_PREFIX }}${{ matrix.suffix }}:latest
+        tags: ${{ secrets.DOCKERHUB_PREFIX }}${{ matrix.target }}:latest
         #labels: ${{ steps.meta.outputs.labels }}
         build-args: |
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
-        target: ${{ matrix.target }}
+        target: labgrid-${{ matrix.target }}
         # TODO use cache from prev stage
         #cache-from: type=local,src=/tmp/.build-cache
 
