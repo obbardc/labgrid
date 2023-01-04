@@ -43,7 +43,7 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        push: true
+        push: false
         load: true
         tags: ${{ secrets.DOCKERHUB_PREFIX }}client:latest
         build-args: |
@@ -55,7 +55,7 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        push: true
+        push: false
         load: true
         tags: ${{ secrets.DOCKERHUB_PREFIX }}exporter:latest
         build-args: |
@@ -67,7 +67,7 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        push: true
+        push: false
         load: true
         tags: ${{ secrets.DOCKERHUB_PREFIX }}coordinator:latest
         build-args: |
