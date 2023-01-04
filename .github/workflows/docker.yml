@@ -21,7 +21,7 @@ jobs:
       run: echo "VERSION=$(python -m setuptools_scm)" >> $GITHUB_OUTPUT
       #run: echo "VERSION=0.4" >> $GITHUB_OUTPUT
 
-# TODO add qemu when multiplatform
+# TODO build for multiple platforms in later commit
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
 
@@ -42,15 +42,16 @@ jobs:
     - name: Build labgrid-client docker image
       uses: docker/build-push-action@v3
       with:
+        push: false
+        load: true
+        tags: labgrid-client
+        #tags: ${{ secrets.DOCKERHUB_PREFIX }}client:latest
         context: .
-        #push: false
-        #load: true
-        push: true
-        tags: ${{ secrets.DOCKERHUB_PREFIX }}client:latest
         build-args: |
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-client
+# TODO build for multiple platforms in later commit
         platforms: |
           linux/amd64
           linux/arm64
@@ -58,15 +59,16 @@ jobs:
     - name: Build labgrid-exporter docker image
       uses: docker/build-push-action@v3
       with:
+        push: false
+        load: true
+        tags: labgrid-exporter
+        #tags: ${{ secrets.DOCKERHUB_PREFIX }}exporter:latest
         context: .
-        #push: false
-        #load: true
-        push: true
-        tags: ${{ secrets.DOCKERHUB_PREFIX }}exporter:latest
         build-args: |
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-exporter
+# TODO build for multiple platforms in later commit
         platforms: |
           linux/amd64
           linux/arm64
@@ -74,15 +76,16 @@ jobs:
     - name: Build labgrid-coordinator docker image
       uses: docker/build-push-action@v3
       with:
+        push: false
+        load: true
+        tags: labgrid-coordinator
+        #tags: ${{ secrets.DOCKERHUB_PREFIX }}coordinator:latest
         context: .
-        #push: false
-        #load: true
-        push: true
-        tags: ${{ secrets.DOCKERHUB_PREFIX }}coordinator:latest
         build-args: |
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-coordinator
+# TODO build for multiple platforms in later commit
         platforms: |
           linux/amd64
           linux/arm64
@@ -90,6 +93,11 @@ jobs:
     - name: Check docker images
       run: |
         docker images
+
+    - name: Run docker image tests
+      run: |
+        docker-compose -f dockerfiles/staging/docker-compose.yml up --exit-code-from client client
+        docker-compose -f dockerfiles/staging/docker-compose.yml down
 
 #    - name: Build docker image
 #      run: |
