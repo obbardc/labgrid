@@ -50,7 +50,7 @@ jobs:
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-client
-        outputs: type=docker,dest=/tmp/labgrid-client-docker.tar
+        outputs: type=tar,dest=/tmp/labgrid-client-docker.tar
 # TODO build for multiple platforms in later commit
         platforms: |
           linux/amd64
@@ -67,7 +67,7 @@ jobs:
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-exporter
-        outputs: type=docker,dest=/tmp/labgrid-exporter-docker.tar
+        outputs: type=tar,dest=/tmp/labgrid-exporter-docker.tar
 # TODO build for multiple platforms in later commit
         platforms: |
           linux/amd64
@@ -84,7 +84,7 @@ jobs:
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-coordinator
-        outputs: type=docker,dest=/tmp/labgrid-coordinator-docker.tar
+        outputs: type=tar,dest=/tmp/labgrid-coordinator-docker.tar
 # TODO build for multiple platforms in later commit
         platforms: |
           linux/amd64
