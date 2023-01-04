@@ -49,6 +49,8 @@ jobs:
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-client
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
 
     - name: Build labgrid-exporter docker image
       uses: docker/build-push-action@v3
@@ -60,6 +62,8 @@ jobs:
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-exporter
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
 
     - name: Build labgrid-coordinator docker image
       uses: docker/build-push-action@v3
@@ -71,6 +75,8 @@ jobs:
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
         file: dockerfiles/Dockerfile
         target: labgrid-coordinator
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
 
     - name: Check docker images
       run: |
