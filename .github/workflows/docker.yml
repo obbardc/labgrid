@@ -90,9 +90,11 @@ jobs:
           linux/amd64
           linux/arm64
 
-    - name: Check docker images
+    - name: Load docker images
       run: |
-        ls -la /tmp
+        docker load --input /tmp/labgrid-client-docker.tar
+        docker load --input /tmp/labgrid-exporter-docker.tar
+        docker load --input /tmp/labgrid-coordinator-docker.tar
 
     - name: Check docker images
       run: |
