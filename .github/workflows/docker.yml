@@ -7,8 +7,18 @@ on:
 
 # TODO build labgrid-base & cache it in separate job
 jobs:
-  docker:
+  docker-base-build:
+    name: Build Docker container (labgrid-base)
     runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: test
+      run: echo testings
+
+  docker-build:
+    name: Build Docker container
+    runs-on: ubuntu-latest
+    needs: docker-base-build
     strategy:
       matrix:
         target:
