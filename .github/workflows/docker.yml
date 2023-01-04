@@ -8,15 +8,28 @@ on:
 # TODO build labgrid-base & cache it in separate job
 jobs:
   docker-base-build:
-    name: Build Docker container (labgrid-base)
+    name: Build Docker image (labgrid-base)
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: test
-      run: echo testings
+    # TODO see if we can cache version once
+    - name: Build labgrid-base docker image
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        push: false
+        # TODO check tags / labels
+        #tags: ${{ steps.meta.outputs.tags }}
+        #labels: ${{ steps.meta.outputs.labels }}
+        #build-args: |
+        #  VERSION=${{ steps.labgrid-version.outputs.VERSION }}
+        file: dockerfiles/Dockerfile
+        target: labgrid-base
+        # TODO cache to somewhere & upload it as artifact which expires after job ?
+        #cache-from: type=local,src=/tmp/.build-cache
 
   docker-build:
-    name: Build Docker container
+    name: Build Docker image
     runs-on: ubuntu-latest
     needs: docker-base-build
     strategy:
