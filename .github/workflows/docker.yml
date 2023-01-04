@@ -35,10 +35,13 @@ jobs:
     needs: docker-base-build
     strategy:
       matrix:
-        target:
-          - labgrid-client
-          - labgrid-exporter
-          - labgrid-coordinator
+        include:
+          - target: labgrid-client
+            suffix: client
+          - target: labgrid-exporter
+            suffix: exporter
+          - target: labgrid-coordinator
+            suffix: coordinator
     steps:
     - uses: actions/checkout@v3
     - name: Install system dependencies
@@ -67,16 +70,17 @@ jobs:
 
 # TODO add meta step
 
-# TODO set tags to labgrid-<target>
     - name: Build ${{ matrix.target }} docker image
       uses: docker/build-push-action@v3
       with:
         context: .
         # my fork is set to "obbardc/labgrid-"
         # TODO change to true and push to ${{ secrets.DOCKERHUB_PREFIX }}
-        push: false
+        # TODO push later ?
+        push: true
         # TODO check tags / labels
         #tags: ${{ steps.meta.outputs.tags }}
+        tags: ${{ secrets.DOCKERHUB_PREFIX }}${{ matrix.suffix }}:latest
         #labels: ${{ steps.meta.outputs.labels }}
         build-args: |
           VERSION=${{ steps.labgrid-version.outputs.VERSION }}
