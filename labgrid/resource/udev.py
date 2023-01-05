@@ -291,11 +291,10 @@ class IMXUSBLoader(USBResource):
 @attr.s(eq=False)
 class RKUSBLoader(USBResource):
     def filter_match(self, device):
-        match = (device.properties.get('ID_VENDOR_ID'), device.properties.get('ID_MODEL_ID'))
-
-        if match not in [("2207", "110a")]:
+        if device.properties.get('ID_VENDOR_ID') != "2207":
             return False
-
+        #if device.properties.get('ID_MODEL_ID') not in ["320c", "330c"]:
+        #    return False
         return super().filter_match(device)
 
 @target_factory.reg_resource
