@@ -1,0 +1,123 @@
+name: docker build
+
+on:
+  push:
+
+jobs:
+  docker-build-base:
+    name: labgrid-base docker build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+
+    - name: Setup Docker buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build labgrid-base docker image
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        push: false
+        tags: labgrid-base
+        # No need to add version
+        #build-args: |
+        #  VERSION=${{ steps.labgrid-version.outputs.VERSION }}
+        file: dockerfiles/Dockerfile
+        target: labgrid-base
+        platforms: |
+          linux/amd64
+          linux/arm64
+        cache-to: type=local,dest=/tmp/.build-cache
+
+    - name: Upload docker cache
+      uses: actions/upload-artifact@v3
+      with:
+        name: labgrid-base
+        path: /tmp/.build-cache
+        retention-days: 1
+
+  docker-build:
+    name: labgrid-${{ matrix.target }} docker build
+    runs-on: ubuntu-latest
+    needs: docker-build-base
+    strategy:
+      matrix:
+        target:
+          - client
+          - exporter
+          - coordinator
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install system dependencies
+      run: |
+        sudo apt install -yq python3-pip
+        python3 -m pip install setuptools_scm
+
+    - name: Extract Labgrid version from scm
+      id: labgrid-version
+      # TODO version `0.1.dev1-g2bd3f48` is wrong ?
+      run: echo "VERSION=$(python -m setuptools_scm)" >> $GITHUB_OUTPUT
+      #run: echo "VERSION=0.4" >> $GITHUB_OUTPUT
+
+    - name: Download docker cache
+      uses: actions/download-artifact@v3
+      with:
+        name: labgrid-base
+        path: /tmp/.build-cache
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+
+    - name: Setup Docker buildx
+      uses: docker/setup-buildx-action@v2
+
+    # TODO only login to DockerHub if credentials exist
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # TODO only login to GHCR if enabled
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract Docker metadata
+      id: docker-meta
+      uses: docker/metadata-action@v4
+      with:
+        # TODO only push to DockerHub if logged in
+        # TODO only push to GHCR if logged in
+        images: |
+          ghcr.io/${{ github.repository }}-${{ matrix.target }}
+          ${{ secrets.DOCKERHUB_PREFIX }}${{ matrix.target }}
+        tags: |
+          "type=raw,value=latest,enable={{is_default_branch}}"
+          "type=ref,event=branch"
+          "type=ref,suffix=-{{sha}},event=branch"
+          "type=ref,suffix=-{{date 'YYYYMMDD'}},event=branch"
+          "type=ref,event=tag"
+          "type=ref,event=pr"
+
+    - name: Build labgrid-${{ matrix.target }} docker image
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.docker-meta.outputs.tags }}
+        labels: ${{ steps.docker-meta.outputs.labels }}
+        build-args: VERSION=${{ steps.labgrid-version.outputs.VERSION }}
+        file: dockerfiles/Dockerfile
+        target: labgrid-${{ matrix.target }}
+        platforms: linux/amd64,linux/arm64
+        cache-from: type=local,src=/tmp/.build-cache
